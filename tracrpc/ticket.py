@@ -1,7 +1,8 @@
 from trac.attachment import Attachment
 from trac.core import *
+from trac.perm import PermissionCache
 from tracrpc.api import IXMLRPCHandler, expose_rpc
-from tracrpc.util import to_timestamp
+from tracrpc.util import to_timestamp, to_datetime
 import trac.ticket.model as model
 import trac.ticket.query as query
 from trac.ticket.api import TicketSystem
@@ -64,12 +65,13 @@ class TicketRPC(Component):
         """Returns the actions that can be performed on the ticket."""
         ticketSystem = TicketSystem(self.env)
         t = model.Ticket(self.env, id)
-        return ticketSystem.get_available_actions(t, req.perm)
+        return ticketSystem.get_available_actions(req, t)
 
     def get(self, req, id):
         """ Fetch a ticket. Returns [id, time_created, time_changed, attributes]. """
         t = model.Ticket(self.env, id)
-        return (t.id, t.time_created, t.time_changed, t.values)
+        return (t.id, to_datetime(t.time_created), 
+                to_datetime(t.time_changed), t.values)
 
     def create(self, req, summary, description, attributes = {}, notify=False):
         """ Create a new ticket, returning the ticket ID. """
@@ -118,7 +120,8 @@ class TicketRPC(Component):
 
     def changeLog(self, req, id, when=0):
         t = model.Ticket(self.env, id)
-        return t.get_changelog(when)
+        for date, author, field, old, new, permanent in t.get_changelog(when):
+            yield (to_datetime(date), author, field, old, new, permanent)
     # Use existing documentation from Ticket model
     changeLog.__doc__ = pydoc.getdoc(model.Ticket.get_changelog)
 
@@ -126,7 +129,8 @@ class TicketRPC(Component):
         """ Lists attachments for a given ticket. Returns (filename,
         description, size, time, author) for each attachment."""
         for t in Attachment.select(self.env, 'ticket', ticket):
-            yield (t.filename, t.description or '', t.size, t.time, t.author)
+            yield (t.filename, t.description or '', t.size, 
+                   to_datetime(t.date), t.author)
 
     def getAttachment(self, req, ticket, filename):
         """ returns the content of an attachment. """
@@ -240,8 +244,13 @@ def ticketEnumFactory(cls):
         getAll.__doc__ = """ Get a list of all ticket %s names. """ % cls.__name__.lower()
 
         def get(self, req, name):
-            i = cls(self.env, name)
-            return i.value
+            if (cls.__name__ == 'Status'):
+               i = cls(self.env)
+               x = name
+            else: 
+               i = cls(self.env, name)
+               x = i.value
+            return x
         get.__doc__ = """ Get a ticket %s. """ % cls.__name__.lower()
 
         def delete(self, req, name):

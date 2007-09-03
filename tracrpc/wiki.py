@@ -4,6 +4,7 @@ except ImportError:
     from StringIO import StringIO
 import xmlrpclib
 import posixpath
+import time
 
 from trac.core import *
 from trac.perm import IPermissionRequestor
@@ -12,7 +13,7 @@ from trac.wiki.model import WikiPage
 from trac.wiki.formatter import wiki_to_html
 from trac.attachment import Attachment
 from tracrpc.api import IXMLRPCHandler, expose_rpc
-from tracrpc.util import to_timestamp
+from tracrpc.util import to_timestamp, to_datetime
 
 class WikiRPC(Component):
     """ Implementation of the [http://www.jspwiki.org/Wiki.jsp?page=WikiRPCInterface2 WikiRPC API]. """
@@ -92,8 +93,9 @@ class WikiRPC(Component):
         page = WikiPage(self.env, pagename, version)
         if page.exists:
             last_update = page.get_history().next()
-            return self._page_info(page.name, last_update[1], last_update[2],
-                                   page.version)
+            return self._page_info(page.name, 
+                                   time.mktime(last_update[1].utctimetuple()), 
+                                   last_update[2], page.version)
 
     def putPage(self, req, pagename, content, attributes):
         """ writes the content of the page. """

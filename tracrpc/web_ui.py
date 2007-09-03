@@ -1,3 +1,4 @@
+from pkg_resources import resource_filename
 from trac.core import *
 from trac.web.main import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet
@@ -8,7 +9,7 @@ import xmlrpclib
 class XMLRPCWeb(Component):
     """ Handle XML-RPC calls from HTTP clients, as well as presenting a list of
         methods available to the currently logged in user. Browsing to
-        <trac>/xmlrpc will display this list. """
+        <trac>/xmlrpc or <trac>/login/xmlrpc will display this list. """
 
     implements(IRequestHandler, ITemplateProvider)
 
@@ -48,8 +49,7 @@ class XMLRPCWeb(Component):
                     traceback.print_exc(file=out)
                     raise Exception('%s: %s\n%s' % (method.name, str(e), out.getvalue()))
             add_stylesheet(req, 'common/css/wiki.css')
-            req.hdf['xmlrpc.functions'] = namespaces
-            return 'xmlrpclist.cs', None
+            return ('xmlrpclist.cs', {'xmlrpc': {'functions': namespaces}}, None)
 
         # Handle XML-RPC call
         args, method = xmlrpclib.loads(req.read(int(req.get_header('Content-Length'))))
@@ -73,5 +73,4 @@ class XMLRPCWeb(Component):
         return []
 
     def get_templates_dirs(self):
-        from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
