@@ -31,8 +31,8 @@ class RpcSearchTestCase(TracRpcTestCase):
                         {'type': 'enhancement', 'owner': 'A'})
         results = self.user.search.performSearch("ticket10786")
         self.assertEquals(1, len(results))
-        self.assertEquals('<span class="new">#1</span>: enhancement: '
-                          'ticket10786 (new)',
+        self.assertEquals('<span class="new">#%d</span>: enhancement: '
+                          'ticket10786 (new)' % t1,
                           results[0][1])
         self.assertEquals(0, self.admin.ticket.delete(t1))
 

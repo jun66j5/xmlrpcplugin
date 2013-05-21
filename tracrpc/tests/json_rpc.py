@@ -164,8 +164,8 @@ else:
                     'params': ['ticket10786']}
             result = self._auth_req(data, user='admin')
             self.assertEquals(None, result['error'])
-            self.assertEquals('<span class="new">#1</span>: enhancement: '
-                              'ticket10786 (new)',
+            self.assertEquals('<span class="new">#%d</span>: enhancement: '
+                              'ticket10786 (new)' % tktid,
                               result['result'][0][1])
             self.assertEquals(1, len(result['result']))
 
