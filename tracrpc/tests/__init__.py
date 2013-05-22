@@ -94,9 +94,7 @@ else :
         def setUp(self):
             log = rpc_testenv.get_trac_environment().log
             log.info('=' * 70)
-            log.info('(TEST) Starting %s.%s',
-                            self.__class__.__name__,
-                            self._testMethodName)
+            log.info('(TEST) Starting %s', '.'.join(self.id().split('.')[-2:]))
             log.info('=' * 70)
 
         def failUnlessRaises(self, excClass, callableObj, *args, **kwargs):
